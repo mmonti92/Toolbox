@@ -23,21 +23,17 @@ h = const.h
 kB = const.Boltzmann
 
 
-@dataclass
 class Sample:
     """A simple Sample class implementation, useful for quick calculations"""
 
-    name: str = ""
-    d: float = 0
-    tau: float = 100e-15
-    N: float = 1e17
-
-    def __post_init__(self):
+    def __init__(self, name: str, d: str = 0, tau: str = 0, N: str = 1e17):
         self.para = tool.ReadJSON(file)[name]
         self.N *= 1e6
+        self.d = d
+        self.tau = tau
 
         self.Extraction()
-        self.Calc()
+        # self.Calc()
 
     def __str__(self):
         return (
@@ -81,12 +77,15 @@ class Sample:
         self.omC = e * B / self.mass
         self.fC = e * B / (self.mass * 2e12 * np.pi)
 
-        self.cond0 = self.N * self.tau * e ** 2 / self.mass
-        self.omP = np.sqrt(self.N * e ** 2 / (self.mass * e0))
+        self.cond0 = self.N * self.tau * e**2 / self.mass
+        self.omP = np.sqrt(self.N * e**2 / (self.mass * e0))
         self.mobility_from_tau = e * self.tau / self.mass
 
     def Model(
-        self, f: ndarray = np.linspace(0, 4, 1000), model: str = "Drude", B: float = 0
+        self,
+        f: np.ndarray = np.linspace(0, 4, 1000),
+        model: str = "Drude",
+        B: float = 0,
     ) -> list:
         """
         Does simple modelling of Drude or Cyclotron conductivity.

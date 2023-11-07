@@ -4,10 +4,8 @@
 ###############################################
 
 import numpy as np
-import pandas as pd
 import sys
 import inspect  # contains stuff to inspect module tree
-import matplotlib.pyplot as plt
 import functools  # stuff for making decorators
 import time as tm
 import smtplib as sm  # email protocol
@@ -17,7 +15,6 @@ import pickle as pk
 import json  # interface with json type
 import typing as tp  # support for annotations
 
-import DataAnalysis.math_functions as mt  # set of mathematical tools
 import DataAnalysis.Models as mod  # my models for fitting
 
 

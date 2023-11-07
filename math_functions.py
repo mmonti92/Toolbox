@@ -59,7 +59,7 @@ def isnumber(x: typing.Any) -> bool:
     """
     Checks if x is a number (int, float)
     """
-    if type(x) == int or type(x) == float:
+    if isinstance(x, int) or isinstance(x, float):
         return True
     else:
         return False

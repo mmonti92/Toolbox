@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.constants as const
-import warnings as wn
 import scipy.special as sp
 
 import lmfit as fit
@@ -86,9 +85,9 @@ def DecayRise(par, x, *args, **kwargs):
     tau2 = val["tau2"]
     B = val["B"]
     x0 = val["x0"]
-    return (
-        A * np.exp(-(x - x0) / tau) + B * np.exp(-(x - x0) / tau2)
-    ) * np.heaviside(x - x0, 0)
+    return (A * np.exp(-(x - x0) / tau) + B * np.exp(-(x - x0) / tau2)) * np.heaviside(
+        x - x0, 0
+    )
 
 
 def Drop(par, x, *args, **kwargs):
@@ -115,10 +114,7 @@ def DropRise(par, x, *args, **kwargs):
     D = val["D"]
     t = x - x0
     return (
-        D
-        * (-A * np.exp(-t / tau) + B * np.exp(-t / tauB))
-        * 0.5
-        * (1 + sp.erf(t / tr))
+        D * (-A * np.exp(-t / tau) + B * np.exp(-t / tauB)) * 0.5 * (1 + sp.erf(t / tr))
     ) + C
     # return -C + np.exp(-t / tauB)
 
@@ -138,11 +134,7 @@ def TwoDropRise(par, x, *args, **kwargs):
     t = x - x0
     return (
         D
-        * (
-            -A * np.exp(-t / tau)
-            - E * np.exp(-t / tauE)
-            + B * np.exp(-t / tauB)
-        )
+        * (-A * np.exp(-t / tau) - E * np.exp(-t / tauE) + B * np.exp(-t / tauB))
         * 0.5
         * (1 + sp.erf(t / tr))
     ) + C
@@ -269,13 +261,7 @@ def Dropsh(par, x, *args, **kwargs):
     # ) + C
 
     f = (
-        (
-            (
-                A * (-2 * D * Delta + Delta**2)
-                + B * beta**2
-                + C * (D - Delta) * beta
-            )
-        )
+        ((A * (-2 * D * Delta + Delta**2) + B * beta**2 + C * (D - Delta) * beta))
         * 0.5
         * (1 + sp.erf(t / tr))
     )
@@ -315,8 +301,7 @@ def BandPass(par, x, *args, **kwargs):
         S += Logistic(par, x)
 
     e = B * (
-        np.exp(-(x - l0) / tau) * np.heaviside(x - l0, 0)
-        + 1 * np.heaviside(l0 - x, 1)
+        np.exp(-(x - l0) / tau) * np.heaviside(x - l0, 0) + 1 * np.heaviside(l0 - x, 1)
     )
 
     return S * e
@@ -395,9 +380,7 @@ def Trans(par, x, *args, **kwargs):
     N = val["N"]
     om = np.pi * 2e12 * x
 
-    t = 1 / (
-        1 + (Z0 * d * N * e**2 * tau / (m * (1 + ns) * (1 + 1j * om * tau)))
-    )
+    t = 1 / (1 + (Z0 * d * N * e**2 * tau / (m * (1 + ns) * (1 + 1j * om * tau))))
     return np.abs(t)
 
 
@@ -557,9 +540,7 @@ def fC(par, P):
     A = r**2 * np.pi
     phi = P * 1e-3 * 800e-9 / (5e3 * A * h * c * 1e4)
     N = phi / 1e-5
-    Ef = (
-        hbar**2 * (3 * np.pi**2 * N * 1e6) ** 0.667 / (2 * (0.018 * m0) * e)
-    )
+    Ef = hbar**2 * (3 * np.pi**2 * N * 1e6) ** 0.667 / (2 * (0.018 * m0) * e)
     fC = fC0 / np.sqrt(1 + 4 * Ef / 0.237)
     return fC
 
