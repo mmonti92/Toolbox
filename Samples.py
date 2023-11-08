@@ -7,11 +7,11 @@ import lmfit as fit
 import DataAnalysis.Models as mod
 import MyTools as tool
 
-file = (
-    "\\\\uni.au.dk\\Users\\au684834\\Documents\\"
-    + "Python\\Basics\\DataAnalysis\\SampleDB.json"
-)
-
+# file = (
+#     "\\\\uni.au.dk\\Users\\au684834\\Documents\\"
+#     + "Python\\Basics\\DataAnalysis\\SampleDB.json"
+# )
+file = "SampleDB.json"
 e = const.e
 m0 = const.m_e
 vacImp = const.physical_constants["characteristic impedance of vacuum"]
@@ -28,7 +28,7 @@ class Sample:
 
     def __init__(self, name: str, d: str = 0, tau: str = 0, N: str = 1e17):
         self.para = tool.ReadJSON(file)[name]
-        self.N *= 1e6
+        self.N = N * 1e6
         self.d = d
         self.tau = tau
 
