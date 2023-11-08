@@ -53,7 +53,7 @@ class Sample:
             + "\n"
         )
 
-    def Extraction(self):
+    def Extraction(self) -> None:
         """
         Extracts the needed values from the json
         """
@@ -68,7 +68,7 @@ class Sample:
         except KeyError:
             self.mu_e = 0
 
-    def Calc(self, B: float = 0):
+    def Calc(self, B: float = 0) -> None:
         """
         Function that computes basic parameters of the sample such as the
         plasma resonance and mobility.
@@ -86,7 +86,7 @@ class Sample:
         f: np.ndarray = np.linspace(0, 4, 1000),
         model: str = "Drude",
         B: float = 0,
-    ) -> list:
+    ) -> dict:
         """
         Does simple modelling of Drude or Cyclotron conductivity.
         """
@@ -101,7 +101,8 @@ class Sample:
         eps = self.eInf + 1j * cond / (om * e0)
         n_complex = np.sqrt(eps)
         T = (1 + self.ns) / (cond * Z0 * self.d + 1 + self.ns)
-        return [f, cond, eps, n_complex, T]
+        output = {"f": f, "cond": cond, "eps": eps, "n": n_complex, "T": T}
+        return output
 
 
 if __name__ == "__main__":

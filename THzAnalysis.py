@@ -2,6 +2,7 @@ import numpy as np
 import dataclasses as dc
 import scipy.constants as cnst
 import warnings as wn
+import typing as tp
 
 import lmfit as fit
 
@@ -16,8 +17,10 @@ e0 = cnst.epsilon_0
 c0 = cnst.c
 
 
-def ResWrap(modelName: str, *args, **kwargs):
-    def Residual(par: fit.Parameters, x: np.ndarray, data: np.ndarray = None):
+def ResWrap(modelName: str, *args, **kwargs) -> tp.Callable:
+    def Residual(
+        par: fit.Parameters, x: np.ndarray, data: np.ndarray = None
+    ) -> np.ndarray:
         model = mod.Switch(modelName, par, x, *args, **kwargs)
         if np.any(np.iscomplex(data)):
             model = np.real(model)
@@ -45,6 +48,11 @@ class FileStructure:
 
 
 class ComplexData:
+    """
+    A class that implements complex electric field data and calculates the
+    equivalent quantities (conductivity, transmission etc)
+    """
+
     def __init__(
         self,
         Et: np.ndarray,
@@ -62,11 +70,11 @@ class ComplexData:
 
         self.UpdateData()
 
-    def CalcFFT(self):
+    def CalcFFT(self) -> None:
         self.f, self.Ef = mt.IFFT(self.x, self.Et, "t")
         self.fRef, self.EfRef = mt.IFFT(self.tRef, self.EtRef, "t")
 
-    def CalcQuantities(self):
+    def CalcQuantities(self) -> None:
         self.trans = self.Ef / self.EfRef
         try:
             n2 = self.sam.n2
@@ -82,25 +90,44 @@ class ComplexData:
         self.loss = np.imag(-1 / self.epsilon)
         self.refractiveIndex = np.sqrt(self.epsilon)
 
-    def UpdateData(self):
+    def UpdateData(self) -> None:
         self.CalcFFT()
         self.CalcQuantities()
 
 
 class THzAnalysis:
-    """docstring for THzAnalysis"""
+    """
+    Basic class that implements a thz analysis environment able to read file
+    convert them based on given formatting possibilities and calculate basic
+    quantities (conductivity, transmission, etc.). Also performs averages and
+    basic fitting procedures.
+
+    """
+
+    fileFormatDict: dict = {
+        "Oxford": FileStructure(2, 1),
+        "Teraview": FileStructure(1, 7, 3, ",", 0.2997),
+        "abcd": FileStructure(1, 2),
+    }
 
     def __init__(self, sample: sam.Sample, fmt: str):
         # super(THzAnalysis, self).__init__()
         self.fileList = []
         self.sample = sample
-        self.fmt = fmt
+        try:
+            self.fileFormat = self.fileFormatDict[fmt]
+        except KeyError:
+            self.fileFormat = FileStructure(1, 1)
+            wn.warn(
+                "Warning:: undefined or wrong format, default one chosen: abcd",
+                RuntimeWarning,
+            )
 
         self.dataList = []
         self.dataDict = {}
         self.dataErrDict = {}
 
-    def ShiftPeak(self, x, Et, xRef, EtRef):
+    def ShiftPeak(self, x, Et, xRef, EtRef) -> tuple[np.ndarray, np.ndarray]:
         M = np.amax(EtRef)
         idx = np.where(EtRef == M)[0][0]
         shift = x[idx]
@@ -108,40 +135,16 @@ class THzAnalysis:
         xRef -= shift
         return x, xRef
 
-    def ZeroPad(self, data, exp):
+    def ZeroPad(self, data: ComplexData, exp: int) -> None:
         data.t, data.Et = mt.zeropad(data.t, data.Et, exp)
         data.tRef, data.EtRef = mt.zeropad(data.tRef, data.EtRef, exp)
 
-    def ZeroPadAll(self, exp):
+    def ZeroPadAll(self, exp: int) -> None:
         for d in self.dataList:
             self.ZeroPad(d, exp)
             d.UpdateData()
 
-    def LoadData(self, file: str, refFile: str):
-        fmt = self.fmt
-        self.fileFormat = FileStructure()
-        match fmt:
-            case "Ox":
-                self.fileFormat.signalColumn = 2
-                self.fileFormat.referenceColumn = 1
-
-            case "TW":
-                self.fileFormat.signalColumn = 1
-                self.fileFormat.referenceColumn = 7
-                self.fileFormat.skipHeader = 3
-                self.fileFormat.delimiter = ","
-                self.fileFormat.conversion = 0.2998
-            case "abcd":
-                self.fileFormat.signalColumn = 1
-                self.fileFormat.referenceColumn = 2
-            case _:
-                self.fileFormat.signalColumn = 1
-                self.fileFormat.referenceColumn = 1
-                wn.warn(
-                    "Warning:: undefined or wrong format, "
-                    + "default one chosen: abcd",
-                    RuntimeWarning,
-                )
+    def LoadData(self, file: str, refFile: str) -> ComplexData:
         data = tool.Reader(
             file,
             delimiter=self.fileFormat.delimiter,
@@ -160,14 +163,14 @@ class THzAnalysis:
             refData[self.fileFormat.referenceColumn],
         )
 
-        match fmt:
-            case "Ox":
+        match self.fmt:
+            case "Oxford":
                 (EtRef, Et) = (EtRef - 0.5 * Et, EtRef + 0.5 * Et)
                 x = x - 24
                 xRef = xRef - 24
-            case "Wa":
+            case "Warwick":
                 Et = EtRef - Et
-            case "TW":
+            case "TeraView":
                 pass
             case "abcd":
                 pass
@@ -191,15 +194,15 @@ class THzAnalysis:
         )
         return data
 
-    def AddFile(self, file: str, refFile: str):
+    def AddFile(self, file: str, refFile: str) -> None:
         self.fileList.append([file, refFile])
 
-    def CalcQuantities(self):
+    def CalcQuantities(self) -> None:
         for f, fRef in self.fileList:
             data = self.LoadData(f, fRef)
             self.dataList.append(data)
 
-    def AverageData(self, key: str):
+    def AverageData(self, key: str) -> tuple[np.ndarray, np.ndarray]:
         arr = np.zeros(
             (len(self.dataList), len(vars(self.dataList[0])[key])),
             dtype=complex,
@@ -210,7 +213,7 @@ class THzAnalysis:
         stdArr = np.std(arr, axis=0)
         return avgArr, stdArr
 
-    def GetAverageQuantities(self):
+    def GetAverageQuantities(self) -> tuple[dict, dict]:
         avg = {}
         std = {}
         for key, val in vars(self.dataList[0]).items():
@@ -228,10 +231,18 @@ class THzAnalysis:
         quantity: str,
         par: fit.Parameters,
         *args,
+        bounds: list = None,
         **kwargs,
-    ):
+    ) -> fit.MinimizerResult:
         dataFit = self.dataDict[quantity]
         errFit = self.dataErrDict[quantity]
+        if bounds:
+            dataFit = dataFit[bounds[0] : bounds[1]]
+            errFit = errFit[bounds[0] : bounds[1]]
+        else:
+            idx = np.where((self.f > 0.2) & (self.f < 3))
+            dataFit = dataFit[idx]
+            errFit = errFit[idx]
 
         if np.any(errFit):
             dataFit = np.append(dataFit, errFit, axis=0)
