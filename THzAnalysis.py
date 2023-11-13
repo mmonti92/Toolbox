@@ -6,7 +6,8 @@ import typing as tp
 
 import lmfit as fit
 
-import DataAnalysis.MyTools as tool
+import DataAnalysis.ReadWriteFunctions as rw
+import DataAnalysis.FittingFunctions as ff
 import DataAnalysis.math_functions as mt
 import DataAnalysis.Models as mod
 import DataAnalysis.Samples as sam
@@ -17,34 +18,13 @@ e0 = cnst.epsilon_0
 c0 = cnst.c
 
 
-def ResWrap(modelName: str, *args, **kwargs) -> tp.Callable:
-    def Residual(
-        par: fit.Parameters, x: np.ndarray, data: np.ndarray = None
-    ) -> np.ndarray:
-        model = mod.Switch(modelName, par, x, *args, **kwargs)
-        if np.any(np.iscomplex(data)):
-            model = np.real(model)
-        if data is None:
-            return model
-        dataShape = np.shape(data)
-
-        resid = model - data
-        if dataShape[0] < 3:
-            resid = model - data[0]
-            err = data[1]
-            resid = np.sqrt(resid**2 / err**2)
-        return resid.view(np.float)
-
-    return Residual
-
-
-@dc.dataclass
+@dc.dataclass(slots=True, frozen=True)
 class FileStructure:
     signalColumn: int = 0
     referenceColumn: int = 0
     skipHeader: int = 0
     delimiter: str = "\t"
-    conversion = 0.1499
+    conversion: float = 0.1499
 
 
 class ComplexData:
@@ -68,7 +48,8 @@ class ComplexData:
 
         self.sam = sample
 
-        self.UpdateData()
+        self.CalcFFT()
+        self.CalcQuantities()
 
     def CalcFFT(self) -> None:
         self.f, self.Ef = mt.IFFT(self.x, self.Et, "t")
@@ -86,13 +67,11 @@ class ComplexData:
             / (Z0 * self.sam.d * self.EfRef)
         )
 
-        self.epsilon = self.sam.eInf + 1j * self.sigma / (self.f * 2e12 * np.pi * e0)
+        self.epsilon = self.sam.eInf + 1j * self.sigma / (
+            self.f * 2e12 * np.pi * e0
+        )
         self.loss = np.imag(-1 / self.epsilon)
         self.refractiveIndex = np.sqrt(self.epsilon)
-
-    def UpdateData(self) -> None:
-        self.CalcFFT()
-        self.CalcQuantities()
 
 
 class THzAnalysis:
@@ -142,15 +121,16 @@ class THzAnalysis:
     def ZeroPadAll(self, exp: int) -> None:
         for d in self.dataList:
             self.ZeroPad(d, exp)
-            d.UpdateData()
+            d.CalcFFT()
+            d.CalcQuantities()
 
     def LoadData(self, file: str, refFile: str) -> ComplexData:
-        data = tool.Reader(
+        data = rw.Reader(
             file,
             delimiter=self.fileFormat.delimiter,
             skip_header=self.fileFormat.skipHeader,
         )
-        refData = tool.Reader(
+        refData = rw.Reader(
             refFile,
             delimiter=self.fileFormat.delimiter,
             skip_header=self.fileFormat.skipHeader,
@@ -233,7 +213,7 @@ class THzAnalysis:
         *args,
         bounds: list = None,
         **kwargs,
-    ) -> fit.MinimizerResult:
+    ) -> fit.Minimizer:
         dataFit = self.dataDict[quantity]
         errFit = self.dataErrDict[quantity]
         if bounds:
@@ -245,15 +225,17 @@ class THzAnalysis:
             errFit = errFit[idx]
 
         if np.any(errFit):
-            dataFit = np.append(dataFit, errFit, axis=0)
-            dataFit = np.reshape(dataFit, (2, len(errFit)))
-        res = ResWrap(model, *args, **kwargs)
+            kws = {"data": dataFit, "err": errFit}
+        else:
+            kws = {"data": dataFit}
+
+        res = ff.ResWrap(model, *args, **kwargs)
         self.guessed = mod.Switch(model, par, self.f, *args, **kwargs)
         out = fit.minimize(
             res,
             par,
             args=(self.f,),
-            kws={"data": dataFit},
+            kws=kws,
             nan_policy="omit",
         )
         self.fitted = mod.Switch(model, out.params, self.f, *args, **kwargs)
