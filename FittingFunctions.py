@@ -30,10 +30,10 @@ def Residual_wrapper(name: str) -> tp.Callable:
     ) -> np.ndarray:
         model = mod.Switch(name, par, x, *args, **kwargs)
         if data is None:
-            return model.view(np.float)
+            return model.view(float)
         resid = model - data
         if err is None:
-            return resid.view(np.float)
+            return resid.view(float)
         resid = np.sqrt(resid**2 / err**2)
         return resid.view(np.float)
 

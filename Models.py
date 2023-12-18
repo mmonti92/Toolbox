@@ -48,6 +48,9 @@ def Switch(name, par, x, *args, **kwargs):
         "Tot": Tot,
         "CyclotronTransmission": CyclotronTransmission,
         "DoubleCyclotronTransmission": DoubleCyclotronTransmission,
+        "GeneralGauss2D": GeneralGauss2D,
+        "FocusWidth": FocusWidth,
+        "Waveplate": Waveplate,
     }
     return mapper[name](par, x, *args, **kwargs)
 
@@ -85,9 +88,9 @@ def DecayRise(par, x, *args, **kwargs):
     tau2 = val["tau2"]
     B = val["B"]
     x0 = val["x0"]
-    return (A * np.exp(-(x - x0) / tau) + B * np.exp(-(x - x0) / tau2)) * np.heaviside(
-        x - x0, 0
-    )
+    return (
+        A * np.exp(-(x - x0) / tau) + B * np.exp(-(x - x0) / tau2)
+    ) * np.heaviside(x - x0, 0)
 
 
 def Drop(par, x, *args, **kwargs):
@@ -114,7 +117,10 @@ def DropRise(par, x, *args, **kwargs):
     D = val["D"]
     t = x - x0
     return (
-        D * (-A * np.exp(-t / tau) + B * np.exp(-t / tauB)) * 0.5 * (1 + sp.erf(t / tr))
+        D
+        * (-A * np.exp(-t / tau) + B * np.exp(-t / tauB))
+        * 0.5
+        * (1 + sp.erf(t / tr))
     ) + C
     # return -C + np.exp(-t / tauB)
 
@@ -134,7 +140,11 @@ def TwoDropRise(par, x, *args, **kwargs):
     t = x - x0
     return (
         D
-        * (-A * np.exp(-t / tau) - E * np.exp(-t / tauE) + B * np.exp(-t / tauB))
+        * (
+            -A * np.exp(-t / tau)
+            - E * np.exp(-t / tauE)
+            + B * np.exp(-t / tauB)
+        )
         * 0.5
         * (1 + sp.erf(t / tr))
     ) + C
@@ -261,7 +271,13 @@ def Dropsh(par, x, *args, **kwargs):
     # ) + C
 
     f = (
-        ((A * (-2 * D * Delta + Delta**2) + B * beta**2 + C * (D - Delta) * beta))
+        (
+            (
+                A * (-2 * D * Delta + Delta**2)
+                + B * beta**2
+                + C * (D - Delta) * beta
+            )
+        )
         * 0.5
         * (1 + sp.erf(t / tr))
     )
@@ -301,7 +317,8 @@ def BandPass(par, x, *args, **kwargs):
         S += Logistic(par, x)
 
     e = B * (
-        np.exp(-(x - l0) / tau) * np.heaviside(x - l0, 0) + 1 * np.heaviside(l0 - x, 1)
+        np.exp(-(x - l0) / tau) * np.heaviside(x - l0, 0)
+        + 1 * np.heaviside(l0 - x, 1)
     )
 
     return S * e
@@ -360,7 +377,9 @@ def Gauss(par, x, *args, **kwargs):
     A = val["A"]
     C = val["C"]
 
-    return A * np.exp(-((x - mu) ** 2) / s**2) / (np.sqrt(2 * np.pi) * s) + C
+    return (
+        A * np.exp(-((x - mu) ** 2) / s**2) / (np.sqrt(2 * np.pi) * s) + C
+    )
 
 
 def Drude(par, x, mStarRatio=1.0, *args, **kwargs):
@@ -380,7 +399,9 @@ def Trans(par, x, *args, **kwargs):
     N = val["N"]
     om = np.pi * 2e12 * x
 
-    t = 1 / (1 + (Z0 * d * N * e**2 * tau / (m * (1 + ns) * (1 + 1j * om * tau))))
+    t = 1 / (
+        1 + (Z0 * d * N * e**2 * tau / (m * (1 + ns) * (1 + 1j * om * tau)))
+    )
     return np.abs(t)
 
 
@@ -397,7 +418,10 @@ def Cyclotron(par, x, B=0.0, *args, **kwargs):
     sigma = (
         sigma0
         * (1 - 1j * 2 * np.pi * x * tau * 1e12)
-        / ((1 - 1j * 2 * np.pi * x * tau * 1e12) ** 2 + omegaC**2 * tau**2)
+        / (
+            (1 - 1j * 2 * np.pi * x * tau * 1e12) ** 2
+            + omegaC**2 * tau**2
+        )
     )
     return sigma
 
@@ -540,7 +564,11 @@ def fC(par, P):
     A = r**2 * np.pi
     phi = P * 1e-3 * 800e-9 / (5e3 * A * h * c * 1e4)
     N = phi / 1e-5
-    Ef = hbar**2 * (3 * np.pi**2 * N * 1e6) ** 0.667 / (2 * (0.018 * m0) * e)
+    Ef = (
+        hbar**2
+        * (3 * np.pi**2 * N * 1e6) ** 0.667
+        / (2 * (0.018 * m0) * e)
+    )
     fC = fC0 / np.sqrt(1 + 4 * Ef / 0.237)
     return fC
 
@@ -580,7 +608,9 @@ def TransmissionDrudeFull(par, x, paras):
 
     def nj(N, tau, om, m):
         s0 = N * e**2 / m
-        nj = np.sqrt((1j * s0 / e0) * (tau / (om - 1j * om**2 * tau)) + einf)
+        nj = np.sqrt(
+            (1j * s0 / e0) * (tau / (om - 1j * om**2 * tau)) + einf
+        )
         # nj = np.sqrt(einf +
         #              (1j / (om * e0)) *
         #              (N * e**2 / m) *
@@ -625,7 +655,9 @@ def PhotoTransmission(par, x, paras):
 
     def nC(N, tau, om, m):
         s0 = N * e**2 / m
-        nj = np.sqrt((1j * s0 / e0) * (tau / (om - 1j * om**2 * tau)) + einf)
+        nj = np.sqrt(
+            (1j * s0 / e0) * (tau / (om - 1j * om**2 * tau)) + einf
+        )
         # nj = np.sqrt(einf +
         #              (1j / (om * e0)) *
         #              (N * e**2 / m) *
@@ -653,6 +685,49 @@ def PhotoTransmission(par, x, paras):
         / ((ni * nl + nl * nk) * cosl - 1j * (ni * nk + nl**2) * sinl)
     )
     return t
+
+
+def GeneralGauss2D(par, x, y, *args, **kwargs):
+    val = par.valuesdict()
+    A = val["A"]
+    t, sx, sy = val["t"], val["sx"], val["sy"]
+    x0, y0 = val["x0"], val["y0"]
+    C = val["C"]
+    a = 0.5 * (np.cos(t)) ** 2 / sx**2 + 0.5 * (np.sin(t)) ** 2 / sy**2
+    b = -0.25 * np.sin(2 * t) / sx**2 + 0.25 * np.sin(2 * t) / sy**2
+    c = 0.5 * (np.sin(t)) ** 2 / sx**2 + 0.5 * (np.cos(t)) ** 2 / sy**2
+
+    G = (
+        A
+        * np.exp(
+            -a * (x - x0) ** 2
+            - 2 * b * (x - x0) * (y - y0)
+            - c * (y - y0) ** 2
+        )
+        + C
+    )
+    return G
+
+
+def FocusWidth(par, z, *args, **kwargs):
+    val = par.valuesdict()
+    w0 = val["w0"]
+    z0 = val["z0"]
+    lam = val["lam"]
+    # zR = val["zR"]
+    zR = np.pi * w0**2 / lam
+
+    w = w0 * np.sqrt(1 + ((z - z0) / zR) ** 2)
+    return w
+
+
+def Waveplate(par, x, *args, **kwargs):
+    val = par.valuesdict()
+    A = val["A"]
+    t0 = val["t0"]
+    B = val["B"]
+
+    return A * (np.cos((x - t0) * np.pi / 180)) ** 2 + B
 
 
 if __name__ == "__main__":
