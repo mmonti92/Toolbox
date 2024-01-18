@@ -52,8 +52,8 @@ class ComplexData:
         self.CalcQuantities()
 
     def CalcFFT(self) -> None:
-        self.f, self.Ef = mt.IFFT(self.x, self.Et, "t")
-        self.fRef, self.EfRef = mt.IFFT(self.tRef, self.EtRef, "t")
+        self.f, self.Ef = mt.FFT(self.t, self.Et, "t")
+        self.fRef, self.EfRef = mt.FFT(self.tRef, self.EtRef, "t")
 
     def CalcQuantities(self) -> None:
         self.trans = self.Ef / self.EfRef
@@ -87,12 +87,14 @@ class THzAnalysis:
         "Oxford": FileStructure(2, 1),
         "Teraview": FileStructure(1, 7, 3, ",", 0.2997),
         "abcd": FileStructure(1, 2),
+        "IMMM": FileStructure(1, 1, conversion=1),
     }
 
     def __init__(self, sample: sam.Sample, fmt: str):
         # super(THzAnalysis, self).__init__()
         self.fileList = []
         self.sample = sample
+        self.fmt = fmt
         try:
             self.fileFormat = self.fileFormatDict[fmt]
         except KeyError:
@@ -106,23 +108,8 @@ class THzAnalysis:
         self.dataDict = {}
         self.dataErrDict = {}
 
-    def ShiftPeak(self, x, Et, xRef, EtRef) -> tuple[np.ndarray, np.ndarray]:
-        M = np.amax(EtRef)
-        idx = np.where(EtRef == M)[0][0]
-        shift = x[idx]
-        x -= shift
-        xRef -= shift
-        return x, xRef
-
-    def ZeroPad(self, data: ComplexData, exp: int) -> None:
-        data.t, data.Et = mt.zeropad(data.t, data.Et, exp)
-        data.tRef, data.EtRef = mt.zeropad(data.tRef, data.EtRef, exp)
-
-    def ZeroPadAll(self, exp: int) -> None:
-        for d in self.dataList:
-            self.ZeroPad(d, exp)
-            d.CalcFFT()
-            d.CalcQuantities()
+    def AddFile(self, file: str, refFile: str) -> None:
+        self.fileList.append([file, refFile])
 
     def LoadData(self, file: str, refFile: str) -> ComplexData:
         data = rw.Reader(
@@ -150,9 +137,7 @@ class THzAnalysis:
                 xRef = xRef - 24
             case "Warwick":
                 Et = EtRef - Et
-            case "TeraView":
-                pass
-            case "abcd":
+            case "TeraView" | "abcd" | "IMMM":
                 pass
             case _:
                 wn.warn(
@@ -174,13 +159,39 @@ class THzAnalysis:
         )
         return data
 
-    def AddFile(self, file: str, refFile: str) -> None:
-        self.fileList.append([file, refFile])
-
-    def CalcQuantities(self) -> None:
+    def LoadAll(self) -> None:
         for f, fRef in self.fileList:
             data = self.LoadData(f, fRef)
             self.dataList.append(data)
+
+    def ShiftPeak(self, x, Et, xRef, EtRef) -> tuple[np.ndarray, np.ndarray]:
+        M = np.amax(EtRef)
+        idx = np.where(EtRef == M)[0][0]
+        shift = x[idx]
+        x -= shift
+        xRef -= shift
+        return x, xRef
+
+    def ZeroPad(self, data: ComplexData, exp: int) -> None:
+        data.t, data.Et = mt.zeropad(data.t, data.Et, exp)
+        data.tRef, data.EtRef = mt.zeropad(data.tRef, data.EtRef, exp)
+
+    def Chop(self, data: ComplexData, tR: float, tL: float = -np.inf) -> None:
+        mask = (tL < data.t) & (data.t < tR)
+        data.t, data.Et = data.t[mask], data.Et[mask]
+        data.tRef, data.EtRef = data.tRef[mask], data.EtRef[mask]
+
+    def Window(self, data: ComplexData, windowFunction: callable) -> None:
+        window = windowFunction(data.t)
+        data.Et *= window
+        window = windowFunction(data.tRef)
+        data.EtRef *= window
+
+    def AppplyAll(self, f: callable, *args, **kwargs) -> None:
+        for d in self.dataList:
+            f(d, *args, **kwargs)
+            d.CalcFFT()
+            d.CalcQuantities()
 
     def AverageData(self, key: str) -> tuple[np.ndarray, np.ndarray]:
         arr = np.zeros(

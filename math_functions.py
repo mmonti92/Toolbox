@@ -5,6 +5,7 @@ import scipy.integrate as spint
 import sys
 import functools  # stuff for making decorators
 import typing  # useful for type annotations
+import warnings as wn
 
 e = cnst.e
 kB = cnst.Boltzmann
@@ -133,6 +134,7 @@ def FFT(
     elif xUnit == "t":
         conv = 1.0
     else:
+        wn.warn("Warnings: format not specified, default used")
         conv = 0.1499
 
     timeStep = abs(xData[fftLen - 1] - xData[0]) / (fftLen - 1) / conv
@@ -167,11 +169,12 @@ def IFFT(
         conv = 0.2998
     elif xUnit == "mm":
         conv = 0.1499
-    elif xUnit == "ps":
+    elif xUnit == "ps" or "t":
         conv = 1.0
     elif xUnit == "nm":
         conv = 1.0
     else:
+        wn.warn("Warnings: format not specified, default used")
         conv = 0.1499
 
     timeStep = abs(xData[fftLen - 1] - xData[0]) / (fftLen - 1) / conv

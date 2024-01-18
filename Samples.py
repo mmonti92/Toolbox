@@ -5,13 +5,14 @@ from dataclasses import dataclass
 
 import lmfit as fit
 import DataAnalysis.Models as mod
-import MyTools as tool
+import DataAnalysis.ReadWriteFunctions as tool
 
-# file = (
-#     "\\\\uni.au.dk\\Users\\au684834\\Documents\\"
-#     + "Python\\Basics\\DataAnalysis\\SampleDB.json"
-# )
+file = (
+    "\\\\uni.au.dk\\Users\\au684834\\Documents\\"
+    + "Python\\Basics\\DataAnalysis\\SampleDB.json"
+)
 file = "SampleDB.json"
+file = "C:\\Users\\mmonti\\Documents\\Python\\DataAnalysis\\SampleDB.json"
 e = const.e
 m0 = const.m_e
 vacImp = const.physical_constants["characteristic impedance of vacuum"]
