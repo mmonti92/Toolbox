@@ -255,13 +255,17 @@ def SymConvolution(f, g, t, lower_limit=-sym.oo, upper_limit=sym.oo):
     return CI
 
 
-def MB(E: float, T: float) -> float:
+def MB(E: np.ndarray, T: float) -> np.ndarray:
     f = 2 * np.sqrt(E / np.pi) * (1 / (kB * T)) ** 1.5 * np.exp(-E / (kB * T))
     return f
 
 
-def FD(E: float, mu: float, T: float) -> float:
+def FD(E: np.ndarray, mu: float, T: float) -> np.ndarray:
     return 1 / (1 + np.exp((E - mu) / (kB * T)))
+
+
+def Gauss(t0: float, s: float, t: np.ndarray) -> np.ndarray:
+    return np.exp(-((t - t0) ** 2) / s**2)
 
 
 ####################################################

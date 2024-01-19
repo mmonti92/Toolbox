@@ -339,6 +339,16 @@ def Lorentz(par, x, *args, **kwargs):
     return L
 
 
+def Gauss(par, x, *args, **kwargs):
+    val = par.valuesdict()
+    A = val["A"]
+    s = val["s"]
+    mu = val["mu"]
+    C = val["C"]
+    G = A * np.exp((x - mu) ** 2 / s**2) + C
+    return G
+
+
 def MultiLorentz(par, x, *args, **kwargs):
     val = par.valuesdict()
     C = val["C"]
