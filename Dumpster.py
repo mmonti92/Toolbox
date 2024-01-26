@@ -1,10 +1,10 @@
-import MyTools as tool
+import ReadWriteFunctions as tool
 import scipy.constants as cnst
 
 m0 = cnst.m_e
 
 file = "\\\\uni.au.dk\\Users\\au684834\\Documents\\Python\\Basics\\DataAnalysis\\SampleDB.json"
-
+file = "SampleDB.json"
 # d = {'InAs': {
 #      'n': 3.51, 'ns': 3.5, 'massR': 0.022, 'HHMassR': 0.41,
 #      'LHMassR': 0.026, 'eStatic': 15.15, 'eInf': 12.3, 'lattice': 6.0583,
@@ -12,11 +12,12 @@ file = "\\\\uni.au.dk\\Users\\au684834\\Documents\\Python\\Basics\\DataAnalysis\
 #      'd_e': 1000, 'd_h': 13}}
 
 d = {
-    "InP": {
-        "n": 3.5,
-        "massR": 0.08,
-        "Eg": 1.344,
-        # 'eStatic': 9.72, 'eInf': 6.52, 'lattice': 4.3596,
+    "Air": {
+        "n": 1.0,
+        "massR": 1.0,
+        "Eg": 0,
+        "eStatic": 1,
+        "eInf": 1,  # 'lattice': 4.3596,
         # 'OPE': 0.1028, 'Eg': 2.39, 'mu_e': 400, 'mu_h': 50,
         # 'd_e': 20, 'd_h': 8}}
     }

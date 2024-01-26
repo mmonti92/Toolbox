@@ -20,6 +20,7 @@ c0 = cnst.c
 
 @dc.dataclass(slots=True, frozen=True)
 class FileStructure:
+    name: str = ""
     signalColumn: int = 0
     referenceColumn: int = 0
     skipHeader: int = 0
@@ -84,23 +85,23 @@ class THzAnalysis:
     """
 
     fileFormatDict: dict = {
-        "Oxford": FileStructure(2, 1),
-        "Teraview": FileStructure(1, 7, 3, ",", 0.2997),
-        "abcd": FileStructure(1, 2),
-        "IMMM": FileStructure(1, 1, conversion=1),
+        "Oxford": FileStructure("Oxford", 2, 1),
+        "Teraview": FileStructure("Teraview", 1, 7, 3, ",", 0.2997),
+        "abcd": FileStructure("abcd", 1, 2),
+        "IMMM": FileStructure("IMMM", 1, 1, conversion=1),
     }
 
-    def __init__(self, sample: sam.Sample, fmt: str):
-        # super(THzAnalysis, self).__init__()
+    def __init__(
+        self, sample: sam.Sample = sam.Sample("Air"), fmt: str = "IMMM"
+    ):
         self.fileList = []
         self.sample = sample
-        self.fmt = fmt
         try:
             self.fileFormat = self.fileFormatDict[fmt]
         except KeyError:
             self.fileFormat = FileStructure(1, 1)
             wn.warn(
-                "Warning:: undefined or wrong format, default one chosen: abcd",
+                "Warning:: undefined or wrong format, default one chosen: IMMM",
                 RuntimeWarning,
             )
 
@@ -130,7 +131,7 @@ class THzAnalysis:
             refData[self.fileFormat.referenceColumn],
         )
 
-        match self.fmt:
+        match self.fileFormat.name:
             case "Oxford":
                 (EtRef, Et) = (EtRef - 0.5 * Et, EtRef + 0.5 * Et)
                 x = x - 24

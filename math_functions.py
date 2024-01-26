@@ -2,8 +2,6 @@ import numpy as np
 import sympy as sym
 import scipy.constants as cnst
 import scipy.integrate as spint
-import sys
-import functools  # stuff for making decorators
 import typing  # useful for type annotations
 import warnings as wn
 
@@ -129,13 +127,16 @@ def FFT(
     yFourier = np.fft.fft(yData)
     fftLen = len(yFourier)
     yFourier = yFourier[0 : int((fftLen / 2 + 1))]
-    if xUnit == "OD":
-        conv = 0.2998
-    elif xUnit == "t":
-        conv = 1.0
-    else:
-        wn.warn("Warnings: format not specified, default used")
-        conv = 0.1499
+    match xUnit:
+        case "OD":
+            conv = 0.2998
+        case "mm":
+            conv = 0.1499
+        case "t" | "ps":
+            conv = 1.0
+        case _:
+            wn.warn("Warnings: format not specified, default used")
+            conv = 1.0
 
     timeStep = abs(xData[fftLen - 1] - xData[0]) / (fftLen - 1) / conv
     freq = np.array(list(range(int(fftLen / 2 + 1)))) / timeStep / fftLen
@@ -144,7 +145,7 @@ def FFT(
 
 
 def IFFT(
-    xData: np.ndarray, yData: np.ndarray, xUnit: str = "mm"
+    xData: np.ndarray, yData: np.ndarray, xUnit: str = ""
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Computes the inverse FFT, wrapper around numpy fft
@@ -165,17 +166,16 @@ def IFFT(
     yIFourier = np.fft.ifft(yData)
     fftLen = len(yIFourier)
     yIFourierOut = yIFourier[0 : int((fftLen / 2 + 1))]
-    if xUnit == "OD":
-        conv = 0.2998
-    elif xUnit == "mm":
-        conv = 0.1499
-    elif xUnit == "ps" or "t":
-        conv = 1.0
-    elif xUnit == "nm":
-        conv = 1.0
-    else:
-        wn.warn("Warnings: format not specified, default used")
-        conv = 0.1499
+    match xUnit:
+        case "OD":
+            conv = 0.2998
+        case "mm":
+            conv = 0.1499
+        case "t" | "ps":
+            conv = 1.0
+        case _:
+            wn.warn("Warnings: format not specified, default used")
+            conv = 1.0
 
     timeStep = abs(xData[fftLen - 1] - xData[0]) / (fftLen - 1) / conv
     freq = np.array(list(range(int(fftLen / 2 + 1)))) / timeStep / fftLen
@@ -264,8 +264,12 @@ def FD(E: np.ndarray, mu: float, T: float) -> np.ndarray:
     return 1 / (1 + np.exp((E - mu) / (kB * T)))
 
 
-def Gauss(t0: float, s: float, t: np.ndarray) -> np.ndarray:
-    return np.exp(-((t - t0) ** 2) / s**2)
+def Gauss(t0: float, s: float, t: np.ndarray, A: float = 1.0) -> np.ndarray:
+    return A * np.exp(-((t - t0) ** 2) / s**2)
+
+
+def Lorentz(t0: float, g: float, t: np.ndarray, A: float = 1.0) -> np.ndarray:
+    return A * g / ((t - t0) ** 2 + g**2) / np.pi
 
 
 ####################################################
