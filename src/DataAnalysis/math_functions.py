@@ -13,6 +13,14 @@ hbar = cnst.hbar
 m0 = cnst.m_e
 
 
+def Normalize(x):
+    return x / np.nanmax(x)
+
+
+def AbsNormalize(x):
+    return x / np.nanmax(np.abs(x))
+
+
 def Transmission(OD):
     return 10 ** (-OD) * 100  # in %
 
