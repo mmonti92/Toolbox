@@ -112,7 +112,7 @@ class THzAnalysis:
     def AddFile(self, file: str, refFile: str) -> None:
         self.fileList.append([file, refFile])
 
-    def LoadData(self, file: str, refFile: str) -> ComplexData:
+    def LoadData(self, file: str, refFile: str, shift=True) -> ComplexData:
         data = rw.Reader(
             file,
             delimiter=self.fileFormat.delimiter,
@@ -146,8 +146,8 @@ class THzAnalysis:
                     + "default one chosen: abcd",
                     RuntimeWarning,
                 )
-
-        x, xRef = self.ShiftPeak(x, Et, xRef, EtRef)
+        if shift:  # have to add this as applyall
+            x, xRef = self.ShiftPeak(x, Et, xRef, EtRef)
         t = x / self.fileFormat.conversion
         tRef = xRef / self.fileFormat.conversion
 
@@ -160,9 +160,9 @@ class THzAnalysis:
         )
         return data
 
-    def LoadAll(self) -> None:
+    def LoadAll(self, shift=True) -> None:
         for f, fRef in self.fileList:
-            data = self.LoadData(f, fRef)
+            data = self.LoadData(f, fRef, shift)
             self.dataList.append(data)
 
     def ShiftPeak(self, x, Et, xRef, EtRef) -> tuple[np.ndarray, np.ndarray]:

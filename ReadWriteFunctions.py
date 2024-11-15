@@ -31,7 +31,8 @@ def Reader(
             **kwargs,
         )
         if "names" not in kwargs:
-            datanew = data[:, ~np.all(np.isnan(data), axis=0)]
+            # datanew = data[:, ~np.all(np.isnan(data), axis=0)]
+            datanew = np.nan_to_num(data)
             data = 0
         else:
             datanew = data

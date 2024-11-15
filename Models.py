@@ -51,6 +51,7 @@ def Switch(name, par, x, *args, **kwargs):
         "GeneralGauss2D": GeneralGauss2D,
         "FocusWidth": FocusWidth,
         "Waveplate": Waveplate,
+        "Pulse": Pulse,
     }
     return mapper[name](par, x, *args, **kwargs)
 
@@ -380,16 +381,16 @@ def DoubleLorentz(par, x, *args, **kwargs):
     return L + C
 
 
-def Gauss(par, x, *args, **kwargs):
-    val = par.valuesdict()
-    mu = val["mu"]
-    s = val["s"]
-    A = val["A"]
-    C = val["C"]
+# def Gauss(par, x, *args, **kwargs):
+#     val = par.valuesdict()
+#     mu = val["mu"]
+#     s = val["s"]
+#     A = val["A"]
+#     C = val["C"]
 
-    return (
-        A * np.exp(-((x - mu) ** 2) / s**2) / (np.sqrt(2 * np.pi) * s) + C
-    )
+#     return (
+#         A * np.exp(-((x - mu) ** 2) / s**2) / (np.sqrt(2 * np.pi) * s) + C
+#     )
 
 
 def Drude(par, x, mStarRatio=1.0, *args, **kwargs):
@@ -463,6 +464,33 @@ def DoubleCyclotronTransmission(par, x, *args, **kwargs):
     ) + B * 0.5 * gamma2 / ((omega - omegaC2) ** 2 + (0.5 * gamma2) ** 2)
     T = 1 - L
     return T
+
+
+def Pulse(par, x, *args, **kwargs):
+    val = par.valuesdict()
+    A = val["A"]
+    x0 = val["x0"]
+    om_0 = val["om_0"]
+    s = val["s"]
+    C = val["C"]
+
+    B = val["B"]
+    w = val["w"]
+    p = val["p"]
+    tau = val["tau"]
+
+    D = val["D"]
+    w2 = val["w2"]
+    p2 = val["p2"]
+    tau2 = val["tau2"]
+    tr = val["tr"]
+
+    f = (
+        A * np.exp(-((x - x0) ** 2) / s) * np.sin(om_0 * (x - x0))
+        + B * np.cos(w * (x - x0) + p) * np.exp(-(x - x0) / tau)
+        # + D * np.cos(w2 * (x - x0) + p2) * np.exp(-(x - x0) / tau2)
+    ) * 0.5 * (1 + sp.erf((x - x0) / tr)) + C
+    return f
 
 
 ###############################################
