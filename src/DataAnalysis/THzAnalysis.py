@@ -12,7 +12,7 @@ import DataAnalysis.math_functions as mt
 import DataAnalysis.Models as mod
 import DataAnalysis.Samples as sam
 
-vacImp = cnst.physical_constants["characteristic impedance" + " of vacuum"]
+vacImp = cnst.physical_constants["characteristic impedance of vacuum"]
 Z0 = vacImp[0]  # the value of z0
 e0 = cnst.epsilon_0
 c0 = cnst.c
@@ -101,7 +101,8 @@ class THzAnalysis:
         except KeyError:
             self.fileFormat = FileStructure(1, 1)
             wn.warn(
-                "Warning:: undefined or wrong format, default one chosen: IMMM",
+                "Warning:: undefined or wrong format"
+                + "default one chosen: IMMM",
                 RuntimeWarning,
             )
 
@@ -112,7 +113,9 @@ class THzAnalysis:
     def AddFile(self, file: str, refFile: str) -> None:
         self.fileList.append([file, refFile])
 
-    def LoadData(self, file: str, refFile: str, shift=True) -> ComplexData:
+    def LoadData(
+        self, file: str, refFile: str, shift: float = None
+    ) -> ComplexData:
         data = rw.Reader(
             file,
             delimiter=self.fileFormat.delimiter,
@@ -147,7 +150,7 @@ class THzAnalysis:
                     RuntimeWarning,
                 )
         if shift:  # have to add this as applyall
-            x, xRef = self.ShiftPeak(x, Et, xRef, EtRef)
+            x, xRef = self.ShiftPeak(x, Et, xRef, EtRef, shift)
         t = x / self.fileFormat.conversion
         tRef = xRef / self.fileFormat.conversion
 
@@ -160,17 +163,28 @@ class THzAnalysis:
         )
         return data
 
-    def LoadAll(self, shift=True) -> None:
+    def LoadAll(self, *args: tp.Any, **kwargs) -> None:
         for f, fRef in self.fileList:
-            data = self.LoadData(f, fRef, shift)
+            data = self.LoadData(f, fRef, *args, **kwargs)
             self.dataList.append(data)
 
-    def ShiftPeak(self, x, Et, xRef, EtRef) -> tuple[np.ndarray, np.ndarray]:
-        M = np.amax(EtRef)
-        idx = np.where(EtRef == M)[0][0]
-        shift = x[idx]
-        x -= shift
-        xRef -= shift
+    def ShiftPeak(
+        self,
+        x: np.ndarray,
+        Et: np.ndarray,
+        xRef: np.ndarray,
+        EtRef: np.ndarray,
+        shift: float = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if shift:
+            x -= shift
+            xRef -= shift
+        else:
+            M = np.amax(EtRef)
+            idx = np.where(EtRef == M)[0][0]
+            shift = x[idx]
+            x -= shift
+            xRef -= shift
         return x, xRef
 
     def ZeroPad(self, data: ComplexData, exp: int) -> None:
@@ -188,7 +202,7 @@ class THzAnalysis:
         window = windowFunction(data.tRef)
         data.EtRef *= window
 
-    def AppplyAll(self, f: callable, *args, **kwargs) -> None:
+    def AppplyAll(self, f: callable, *args: tp.Any, **kwargs: tp.Any) -> None:
         for d in self.dataList:
             f(d, *args, **kwargs)
             d.CalcFFT()
@@ -222,9 +236,9 @@ class THzAnalysis:
         model: str,
         quantity: str,
         par: fit.Parameters,
-        *args,
+        *args: tp.Any,
         bounds: list = None,
-        **kwargs,
+        **kwargs: tp.Any,
     ) -> fit.Minimizer:
         dataFit = self.dataDict[quantity]
         errFit = self.dataErrDict[quantity]

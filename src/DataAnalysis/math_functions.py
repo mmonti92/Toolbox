@@ -114,7 +114,7 @@ def zeropad(
 
 
 def FFT(
-    xData: np.ndarray, yData: np.ndarray, xUnit: str = ""
+    xData: np.ndarray, yData: np.ndarray, xUnit: str = "t"
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Computes the FFT, wrapper around numpy fft
@@ -153,7 +153,7 @@ def FFT(
 
 
 def IFFT(
-    xData: np.ndarray, yData: np.ndarray, xUnit: str = ""
+    xData: np.ndarray, yData: np.ndarray, xUnit: str = "t"
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Computes the inverse FFT, wrapper around numpy fft

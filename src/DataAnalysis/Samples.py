@@ -13,6 +13,7 @@ file = (
 )
 file = "SampleDB.json"
 file = "C:\\Users\\mmonti\\Documents\\Python\\DataAnalysis\\SampleDB.json"
+file = "C:\\Users\\mmonti\\Documents\\Python\\DataAnalysis\\src\\DataAnalysis\\SampleDB.json"
 e = const.e
 m0 = const.m_e
 vacImp = const.physical_constants["characteristic impedance of vacuum"]

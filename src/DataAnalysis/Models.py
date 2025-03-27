@@ -52,6 +52,8 @@ def Switch(name, par, x, *args, **kwargs):
         "FocusWidth": FocusWidth,
         "Waveplate": Waveplate,
         "Pulse": Pulse,
+        "PulseInAir": PulseInAir,
+        # "THzPulse": THzPulse,
     }
     return mapper[name](par, x, *args, **kwargs)
 
@@ -354,7 +356,7 @@ def MultiLorentz(par, x, *args, **kwargs):
     val = par.valuesdict()
     C = val["C"]
     if (len(val) - 1) % 3 != 0:
-        raise ValueError("Wrong number of parameters")
+        raise ValueError(f"Wrong number of parameters: {len(val)} provided")
     L = 0
     for i in range(len(val) // 3):
         A = val["A" + str(i)]
@@ -473,6 +475,42 @@ def Pulse(par, x, *args, **kwargs):
     om_0 = val["om_0"]
     s = val["s"]
     C = val["C"]
+    p1 = val["p1"]
+
+    B = val["B"]
+    w = val["w"]
+    p = val["p"]
+    tau = val["tau"]
+
+    # D = val["D"]
+    # w2 = val["w2"]
+    # p2 = val["p2"]
+    # tau2 = val["tau2"]
+    tr = val["tr"]
+
+    pulse = A * np.exp(-((x - x0) ** 2) / s) * np.cos(om_0 * (x - x0) + p1)
+
+    phonon = (
+        (
+            B
+            * np.cos(w * (x - x0) + p)
+            * np.exp(-(x - x0) / tau)
+            # + D * np.cos(w2 * (x - x0) + p2) * np.exp(-(x - x0) / tau2)
+        )
+        * 0.5
+        * (1 + sp.erf((x - x0) / tr))
+    )
+    return pulse + phonon + C
+
+
+def PulseInAir(par, x, *args, **kwargs):
+    val = par.valuesdict()
+    A = val["A"]
+    x0 = val["x0"]
+    om_0 = val["om_0"]
+    s = val["s"]
+    C = val["C"]
+    p1 = val["p1"]
 
     B = val["B"]
     w = val["w"]
@@ -480,17 +518,64 @@ def Pulse(par, x, *args, **kwargs):
     tau = val["tau"]
 
     D = val["D"]
-    w2 = val["w2"]
-    p2 = val["p2"]
-    tau2 = val["tau2"]
+    # w2 = val["w2"]
+    # p2 = val["p2"]
+    # tau2 = val["tau2"]
     tr = val["tr"]
 
-    f = (
-        A * np.exp(-((x - x0) ** 2) / s) * np.sin(om_0 * (x - x0))
-        + B * np.cos(w * (x - x0) + p) * np.exp(-(x - x0) / tau)
-        # + D * np.cos(w2 * (x - x0) + p2) * np.exp(-(x - x0) / tau2)
-    ) * 0.5 * (1 + sp.erf((x - x0) / tr)) + C
-    return f
+    pulse = A * np.exp(-((x - x0) ** 2) / s) * np.cos(om_0 * (x - x0) + p1)
+
+    phonon = (
+        (
+            B
+            * np.cos(w * (x - x0) + p)
+            * np.exp(-(x - x0) / tau)
+            # + D * np.cos(w2 * (x - x0) + p2) * np.exp(-(x - x0) / tau2)
+        )
+        * 0.5
+        * (1 + sp.erf((x - x0) / tr))
+    )
+
+    phononAir = (
+        (
+            D
+            * np.cos(1.7 * 2 * np.pi * (x - x0) + 0)
+            * np.exp(-(x - x0) / 1000)
+            # + D * np.cos(w2 * (x - x0) + p2) * np.exp(-(x - x0) / tau2)
+        )
+        * 0.5
+        * (1 + sp.erf((x - x0) / tr))
+    )
+    return pulse + phonon + phononAir + C
+
+
+# def THzPulse(par, x, *args, **kwargs):
+#     val = par.valuesdict()
+#     A = val["A"]
+#     x0 = val["x0"]
+#     om_0 = val["om_0"]
+#     s = val["s"]
+#     C = val["C"]
+
+#     # B = val["B"]
+#     # w = val["w"]
+#     # p = val["p"]
+#     # tau = val["tau"]
+
+#     # # D = val["D"]
+#     # # w2 = val["w2"]
+#     # # p2 = val["p2"]
+#     # # tau2 = val["tau2"]
+#     # tr = val["tr"]
+
+#     f = (
+#         A
+#         * np.exp(-((x - x0) ** 2) / s)
+#         * np.sin(om_0 * (x - x0))
+#         # + B * np.cos(w * (x - x0) + p) * np.exp(-(x - x0) / tau)
+#         # + D * np.cos(w2 * (x - x0) + p2) * np.exp(-(x - x0) / tau2)
+#     ) + C
+#     return f
 
 
 ###############################################

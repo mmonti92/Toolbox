@@ -6,3 +6,8 @@ Home-page: https://github.com/mmonti92/Toolbox
 Author: Maurizio Monti
 Author-email: monti.maurizi@gmail.com
 License: MIT
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Requires-Dist: lmfit
+Requires-Dist: sympy
