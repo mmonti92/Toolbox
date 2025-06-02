@@ -113,9 +113,7 @@ class THzAnalysis:
     def AddFile(self, file: str, refFile: str) -> None:
         self.fileList.append([file, refFile])
 
-    def LoadData(
-        self, file: str, refFile: str, shift: float = None
-    ) -> ComplexData:
+    def LoadData(self, file: str, refFile: str) -> ComplexData:
         data = rw.Reader(
             file,
             delimiter=self.fileFormat.delimiter,
@@ -149,8 +147,6 @@ class THzAnalysis:
                     + "default one chosen: abcd",
                     RuntimeWarning,
                 )
-        if shift:  # have to add this as applyall
-            x, xRef = self.ShiftPeak(x, Et, xRef, EtRef, shift)
         t = x / self.fileFormat.conversion
         tRef = xRef / self.fileFormat.conversion
 
@@ -196,13 +192,24 @@ class THzAnalysis:
         data.t, data.Et = data.t[mask], data.Et[mask]
         data.tRef, data.EtRef = data.tRef[mask], data.EtRef[mask]
 
+    def ShiftPeak(self, data: ComplexData, shift: float = None):
+        if shift:
+            data.t -= shift
+            data.tRef -= shift
+        else:
+            M = np.amax(data.EtRef)
+            idx = np.where(data.EtRef == M)[0][0]
+            shift = data.t[idx]
+            data.t -= shift
+            data.tRef -= shift
+
     def Window(self, data: ComplexData, windowFunction: callable) -> None:
         window = windowFunction(data.t)
         data.Et *= window
         window = windowFunction(data.tRef)
         data.EtRef *= window
 
-    def AppplyAll(self, f: callable, *args: tp.Any, **kwargs: tp.Any) -> None:
+    def ApplyAll(self, f: callable, *args: tp.Any, **kwargs: tp.Any) -> None:
         for d in self.dataList:
             f(d, *args, **kwargs)
             d.CalcFFT()

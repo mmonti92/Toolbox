@@ -1,4 +1,4 @@
-# import DataAnalysis.THzAnalysisImproved as thz
+import DataAnalysis.THzAnalysisImproved as thz
 import numpy as np
 import matplotlib.pyplot as plt
 import DataAnalysis.Samples as sam
@@ -16,8 +16,8 @@ print(np.trapz(E**2, x=x))
 # np.savetxt("TestDataRef.txt", np.transpose([x, ERef]), delimiter="\t")
 # # sample = sam.Sample("GaAs", 100e-9, 100e-15, 1e17)
 
-# analysis = thz.THzAnalysis(sample, "")
-# analysis.AddFile("TestData.txt", "TestDataRef.txt")
+analysis = thz.THzAnalysis(sample, "")
+analysis.AddFile("TestData.txt", "TestDataRef.txt")
 # # data = analysis.LoadData("TestData.txt", "TestDataRef.txt")
 # analysis.CalcQuantities()
 # print(analysis.GetAverageQuantities())

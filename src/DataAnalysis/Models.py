@@ -184,6 +184,7 @@ def DropOsc(par, x, *args, **kwargs):
         A
         * (
             -np.exp(-t / tau)
+            # -1
             # - F * np.exp(-t / tauF)
             + B * np.exp(-t / tauB)
             + D * np.cos(w * 2 * np.pi * t / 1e3 + p) * np.exp(-t / taup)
@@ -478,29 +479,38 @@ def Pulse(par, x, *args, **kwargs):
     p1 = val["p1"]
 
     B = val["B"]
-    w = val["w"]
+    w = val["w"] * 2 * np.pi
     p = val["p"]
     tau = val["tau"]
 
-    # D = val["D"]
-    # w2 = val["w2"]
-    # p2 = val["p2"]
-    # tau2 = val["tau2"]
-    tr = val["tr"]
+    D = val["D"]
+    w2 = val["w2"] * 2 * np.pi
+    p2 = val["p2"]
+    tau2 = val["tau2"]
 
-    pulse = A * np.exp(-((x - x0) ** 2) / s) * np.cos(om_0 * (x - x0) + p1)
+    tr = val["tr"]
+    pulse = A * np.sin(om_0 * (x - x0) + p1) / np.cosh((x - x0) / s)
+
+    # pulse = A * np.exp(-((x - x0) ** 2) / s) * np.cos(om_0 * (x - x0) + p1)
 
     phonon = (
+        B
+        * np.sin(w * (x - x0) + p)
+        * np.exp(-(x - x0) / tau)
+        * 0.5
+        * (1 + sp.erf((x - x0) / tr))
+    )
+    phonon2 = (
         (
-            B
-            * np.cos(w * (x - x0) + p)
-            * np.exp(-(x - x0) / tau)
+            D
+            * np.sin(w2 * (x - x0) + p2)
+            * np.exp(-(x - x0) / tau2)
             # + D * np.cos(w2 * (x - x0) + p2) * np.exp(-(x - x0) / tau2)
         )
         * 0.5
         * (1 + sp.erf((x - x0) / tr))
     )
-    return pulse + phonon + C
+    return C + pulse + phonon + phonon2
 
 
 def PulseInAir(par, x, *args, **kwargs):

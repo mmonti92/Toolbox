@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: DataAnalysis
 Version: 0.0
 Summary: Some data analysis code
@@ -11,3 +11,9 @@ Requires-Dist: matplotlib
 Requires-Dist: scipy
 Requires-Dist: lmfit
 Requires-Dist: sympy
+Dynamic: author
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary
